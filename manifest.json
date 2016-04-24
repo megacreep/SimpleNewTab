@@ -7,17 +7,14 @@
 
   "permissions": [
     "activeTab",
-    "https://ajax.googleapis.com/"
+    "storage",
+    "unlimitedStorage"
   ],
 
   "chrome_url_overrides" : {
     "newtab": "newtab.html"
   },
 
-  "options_ui": {
-    // Required.
-    "page": "options.html",
-    // Recommended.
-    "chrome_style": true,
-  },
+  "options_page" : "options.html" 
+
 }
