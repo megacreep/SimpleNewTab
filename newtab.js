@@ -9,7 +9,6 @@ function randomSet() {
   }, function(items) {
     var urlList = items.imageList;
     var url = urlList[Math.floor(Math.random() * urlList.length)];
-    console.log(url);
     setBackgroundImage(url);
   })
 }

@@ -1,65 +1,114 @@
-var gFileSystem;
-function errorHandler(e) {
-  var msg = '';
+window.requestFileSystem = window.requestFileSystem || window.webkitRequestFileSystem;
+window.resolveLocalFileSystemURL = 
+  window.resolveLocalFileSystemURL || window.webkitResolveLocalFileSystemURL;
 
-  switch (e.code) {
-    case FileError.QUOTA_EXCEEDED_ERR:
-      msg = 'QUOTA_EXCEEDED_ERR';
-      break;
-    case FileError.NOT_FOUND_ERR:
-      msg = 'NOT_FOUND_ERR';
-      break;
-    case FileError.SECURITY_ERR:
-      msg = 'SECURITY_ERR';
-      break;
-    case FileError.INVALID_MODIFICATION_ERR:
-      msg = 'INVALID_MODIFICATION_ERR';
-      break;
-    case FileError.INVALID_STATE_ERR:
-      msg = 'INVALID_STATE_ERR';
-      break;
-    default:
-      msg = 'Unknown Error';
-      break;
-  };
-
-  console.log('Error: ' + msg);
+function errorHandler(tag) {
+  return function(e) {
+    console.log(tag + ': ' + e.name + ' ' + e.message);
+  }
 }
 
-window.requestFileSystem = window.requestFileSystem || window.webkitRequestFileSystem;
+function uploadFile(file) {
+  window.requestFileSystem(window.PERSISTENT, 1000*1024*1024, function(fs) {
+    // Duplicate each file to local storage
+    saveFile(fs,file);
+  }, errorHandler('requestFileSystem'));
+}
 
-//prepare upload
-function uploadFile(fs, file) {
-  fs.root.getFile(file.name, {create: true, exclusive: true},
+function saveFile(fs, file) {
+  fs.root.getFile(md5(file.name), {create: true, exclusive: true},
     function(fileEntry) {
       // write file system
       fileEntry.createWriter(function(fileWriter) {
         fileWriter.write(file);
-      }, errorHandler);
+      }, errorHandler('writeFile'));
 
       // write local storage
-      var currentList;
-      chrome.storage.local.get({
-        imageList: []
-      }, function(items) {
-        currentList = items.imageList;
-        currentList.push(fileEntry.toURL());
-        chrome.storage.local.set({
-          imageList: currentList
-        }, function() {
-          //TODO add callback here
-        })
-      });
-    }, errorHandler);
+      addFileIndex(fileEntry.toURL());
+    }, errorHandler('getFile'));
 }
 
-document.querySelector('#myfile').addEventListener('change', function(e) {
-  var files = this.files;
-  console.log(files);
-  window.requestFileSystem(window.PERSISTENT, 100*1024*1024, function(fs) {
-    // Duplicate each file to local storage
-    for (var i = 0, file; file = files[i]; i++) {
-      uploadFile(fs,file);
+function deleteFile(url) {
+  window.resolveLocalFileSystemURL(url, function(fileEntry) {
+    fileEntry.remove(function() {
+    }, errorHandler('removeFile'));
+  });
+  removeFileIndex(url);
+}
+
+function addFileIndex(url) {
+  var currentList;
+  chrome.storage.local.get({
+    imageList: []
+  }, function(items) {
+    currentList = items.imageList;
+    currentList.push(url);
+    chrome.storage.local.set({
+      imageList: currentList
+    }, function() {
+      //TODO add callback here
+    })
+  });
+}
+
+function removeFileIndex(url) {
+  var currentList;
+  chrome.storage.local.get({
+    imageList: []
+  }, function(items) {
+    currentList = items.imageList;
+    var index = currentList.indexOf(url);
+    if (index > -1) {
+      currentList.splice(index, 1);
+      chrome.storage.local.set({
+        imageList: currentList
+      }, function() {
+        //TODO add callback here
+      })
     }
-  }, errorHandler);
-});
+  });
+}
+
+function onDeleteClicked(event) {
+  var targetElement = event.target || event.srcElement;
+  var rootImg = targetElement.parentNode.parentNode;
+  var url = rootImg.dataset.url;
+  deleteFile(url);
+  rootImg.parentNode.removeChild(rootImg);
+}
+
+window.onload = function() {
+  var container = document.querySelector('#container');
+  chrome.storage.local.get({
+    imageList: []
+  }, function(items) {
+    var urlList = items.imageList;
+    var fragment = document.createDocumentFragment();
+    let counter = 0;
+    for (var i = 0, url; url = urlList[i]; i++, counter++) {
+      let img = document.createElement('div');
+      img.setAttribute('class', 'img');
+      img.style.backgroundImage = 'url(' + url + ')';
+      img.dataset.url = url;
+      img.innerHTML = '<a class="overlay"><span class="icon"></span></a>';
+      let removeButton = img.firstChild;
+      removeButton.addEventListener('click', onDeleteClicked);
+      fragment.appendChild(img);
+    }
+    container.appendChild(fragment);
+  })
+}
+
+// add drag and drop
+let dnd = DnDFileController('body', function(data) {
+  chosenEntry = null;
+  for (var i = 0; i < data.items.length; i++) {
+    var item = data.items[i];
+    if (item.kind == 'file' &&
+        item.type.match('image/*') &&
+        item.webkitGetAsEntry()) {
+      chosenEntry = item.webkitGetAsEntry();
+      chosenEntry.file(uploadFile);
+    }
+  };
+})

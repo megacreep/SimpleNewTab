@@ -1,0 +1,74 @@
+.img {
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  -webkit-background-size: cover;
+  box-sizing: border-box;
+  height: 180px;
+  width: 320px;
+  z-index: 0;
+}
+
+.img:hover {
+}
+
+#container {
+  overflow: hidden;
+  background: transparent;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+#container > div {
+  height: 180px;
+  width: 320px;
+  margin: 5px;
+  position: relative;
+  margin: 5px;
+}
+
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 180px;
+  width: 320px;
+  z-index: 10;
+  background-color: rgba(0,0,0,0.5); /*dim the background*/
+  opacity: 0;
+  text-align:center;
+  font-family:Helvetica;
+  font-weight:900;
+  color:rgba(255,255,255,.85);
+  font-size:96px;
+  display: block;
+}
+
+.icon {
+  background: url("../images/remove.png") no-repeat 6px center;
+  background-size: 60px 60px;
+  background-position: center;
+  width: 320px;
+  height: 180px;
+  display: block;
+  margin: auto;
+}
+
+.img:hover .overlay {
+  border-radius: 10px;
+  box-shadow: 0 0 0 4px #339999;
+  opacity: 1;
+}
+
+body { 
+  background-image: url('../images/option_background1.jpg');
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  -webkit-background-size: cover;
+  box-sizing: border-box;
+}
