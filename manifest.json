@@ -2,7 +2,7 @@
   "manifest_version": 2,
 
   "name": "Simple New Tab",
-  "description": "This extension simply provide a functionality to replace default chrome new tab with a simple page with a full screen background of your own choice",
+  "description": "Replace default new tab with random one of your uploaded pictures",
   "version": "1.0",
 
   "permissions": [
